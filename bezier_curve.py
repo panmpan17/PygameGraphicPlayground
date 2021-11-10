@@ -4,7 +4,6 @@ from typing import Tuple
 from foundation import ManagedWindow, Point, Entity, InputSystem, Color, Math
 
 
-
 class ClickablePoint(Point):
     def __init__(self, position, color=None, radius=3, width=2, hover_color=None, click_color=None, range=10):
         super().__init__(position=position, color=color, radius=radius, width=width)

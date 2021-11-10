@@ -11,17 +11,55 @@ class Color:
     RED = (255, 0, 0)
     BLACK = (0, 0, 0)
     GRAY = (100, 100, 100)
+    BLUE = (0, 0, 255)
+    GREEN = (0, 255, 0)
+    PINK = (255, 230, 230)
+
+
+Vector = Tuple[int, int]
 
 
 class Math:
     @staticmethod
     def lerp(a: float, b: float, percentage: float) -> float:
-        delta = b - a
-        return a + percentage * delta
+        return (b - a) * percentage + a
 
     @staticmethod
-    def lerp_point(point_a: Tuple[int, int], point_b: Tuple[int, int], percentage: float) -> Tuple[int, int]:
+    def lerp_point(point_a: Vector, point_b: Vector, percentage: float) -> Vector:
         return (Math.lerp(point_a[0], point_b[0], percentage), Math.lerp(point_a[1], point_b[1], percentage))
+
+    @staticmethod
+    def magnitude(point_a: Vector, point_b: Vector) -> float:
+        return ((point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2) ** 0.5
+
+    @staticmethod
+    def sqr_magnitude(point_a: Vector, point_b: Vector) -> float:
+        return (point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2
+    
+    @staticmethod
+    def clamp_magnitude(vector: Vector, distance: float) -> Vector:
+        magnitude = ((vector[0] ** 2 + vector[1] ** 2) ** 0.5) / distance
+        return (vector[0] / magnitude, vector[1] / magnitude)
+
+    @staticmethod
+    def tuple_multiple(point_a: Vector, point_b: Vector | float) -> Vector:
+        if isinstance(point_b, float) or isinstance(point_b, int):
+            return (point_a[0] * point_b, point_a[1] * point_b)
+        else:
+            return (point_a[0] * point_b[0], point_a[1] * point_b[1])
+
+    @staticmethod
+    def tuple_plus(point_a: Vector, point_b: Vector) -> Vector:
+        return (point_a[0] + point_b[0], point_a[1] + point_b[1])
+
+    @staticmethod
+    def tuple_minus(point_a: Vector, point_b: Vector) -> Vector:
+        return (point_a[0] - point_b[0], point_a[1] - point_b[1])
+
+    @staticmethod
+    def normalize(vector: Vector) -> Vector:
+        magnitude = (vector[0] ** 2 + vector[1] ** 2) ** 0.5
+        return (vector[0] / magnitude, vector[1] / magnitude)
 
 
 class InputSystem:
@@ -57,13 +95,17 @@ class Point(Entity):
         pygame.draw.circle(window.surface, self.color, self.position, self.radius, self.width)
 
 class ManagedWindow:
-    def __init__(self, size: Tuple[int, int]) -> None:
+    def __init__(self, size: Vector, step_update=False, tick=30) -> None:
         self.size = size
         self.full_rect = (0, 0, *size)
         self.surface: pygame.Surface = None
         self.background_color = Color.BLACK
 
         self.children: List[Entity] = []
+
+        self.step_update = step_update
+
+        self.tick = tick
 
         pygame.init()
 
@@ -75,6 +117,7 @@ class ManagedWindow:
         while True:
             InputSystem.MOUSE_DOWN = False
             InputSystem.MOUSE_UP = False
+            update_key_pressed = False
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -87,14 +130,25 @@ class ManagedWindow:
                 elif event.type == pygame.MOUSEBUTTONUP:
                     InputSystem.MOUSE_UP = True
 
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        update_key_pressed = True
+                    elif event.key == pygame.K_RETURN:
+                        self.step_update = not self.step_update
+
             InputSystem.MOUSE_POS = pygame.mouse.get_pos()
             
             pygame.draw.rect(self.surface, self.background_color, self.full_rect)
 
             for child in self.children:
-                child.update(1 / 30)
+                if self.step_update:
+                    if update_key_pressed:
+                        child.update(1 / 30)
+                else:
+                    child.update(1 / 30)
+
                 child.draw(self)
 
             pygame.display.flip()
-            clock.tick(30)
+            clock.tick(self.tick)
 
