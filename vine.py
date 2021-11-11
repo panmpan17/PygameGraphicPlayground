@@ -1,4 +1,6 @@
+from os import write
 import pygame
+import csv
 
 from typing import List, Tuple
 from foundation import ManagedWindow, Point, Entity, InputSystem, Color, Math
@@ -36,6 +38,7 @@ class Vine(Entity):
         
         self.gizmos: List[Gizmos] = []
         self.gravity = (0, 0)
+        self.records = []
     
     def update(self, delta_time: float):
         pull_from = self.points[0].position
@@ -48,26 +51,17 @@ class Vine(Entity):
                 continue
 
             pull_to = (pull_direction[0] * point.magnitude + pull_from[0], pull_direction[1] * point.magnitude + pull_from[1])
+            self.gizmos.append(Gizmos(Gizmos.Dot, Color.YELLOW, pull_to))
 
-            # self.gizmos.append(Gizmos(Gizmos.Dot, Color.YELLOW, pull_to))
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.BLUE, (point.position, pull_to)))
-
-            # point.acceration = Math.tuple_plus(point.acceration, Math.tuple_minus(pull_to, point.position))
-            # point.acceration = Math.tuple_minus(pull_to, point.position)
-            # point.acceration = point.acceration[0], point.acceration[1] + 9 # gravity
             acceleration = self.gravity
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.RED, (point.position, Math.tuple_plus(point.position, self.gravity))))
+
             lift_delta = Math.tuple_multiple(Math.tuple_minus(pull_from, point.position), 0.3)
             acceleration = Math.tuple_plus(acceleration, lift_delta)
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.GREEN, (point.position, Math.tuple_plus(point.position, lift_delta))))
+
             acceleration = Math.tuple_plus(acceleration, Math.tuple_minus(pull_to, point.position))
-
-
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.RED, (point.position, Math.tuple_plus(point.position, self.gravity))))
-
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.GREEN, (point.position, Math.tuple_plus(point.position, lift_delta))))
-
-
-            # Math.tuple_plus(pull_from, point.position)
-            # point.acceration = Math.tuple_plus(point.acceration, Math.normalize(Math.tuple_plus(pull_from, point.position)))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.BLUE, (point.position, pull_to)))
 
             point.velocity = Math.tuple_plus(point.velocity, Math.tuple_multiple(acceleration, delta_time))
 
@@ -81,7 +75,7 @@ class Vine(Entity):
                     Math.tuple_minus(suppose_point, pull_from),
                     point.magnitude))
 
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.YELLOW, (new_position, Math.tuple_plus(new_position, point.velocity))))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.YELLOW, (new_position, Math.tuple_plus(new_position, point.velocity))))
 
             # Calculate magnitude constrain translate in to velocity and acceleration
             length_fix_delta = Math.tuple_minus(new_position, suppose_point)
@@ -93,10 +87,11 @@ class Vine(Entity):
             point.velocity = Math.tuple_plus(point.velocity, Math.tuple_multiple(length_fix_delta, 1))
             # point.velocity = Math.tuple_plus(point.velocity, Math.tuple_multiple(Math.tuple_minus(new_position, point.position), 1))
 
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.ORANGE, (point.position, Math.tuple_plus(point.position, acceleration))))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.ORANGE, (point.position, Math.tuple_plus(point.position, acceleration))))
             # point.velocity = Math.tuple_plus(point.velocity, length_fix_delta)
 
             point.position = new_position
+            self.records.append((*point.position, *point.velocity, Math.magnitude(point.velocity)))
 
             pull_from = point.position
 
@@ -109,9 +104,16 @@ class Vine(Entity):
         
         for gizmos in self.gizmos:
             if gizmos.type == Gizmos.Line:
-                pygame.draw.line(window.surface, gizmos.color, gizmos.argument[0], gizmos.argument[1], width=3)
+                pygame.draw.line(window.surface, gizmos.color, gizmos.argument[0], gizmos.argument[1])
             elif gizmos.type == Gizmos.Dot:
                 pygame.draw.circle(window.surface, gizmos.color, gizmos.argument, radius=3)
+
+    def save_records(self):
+        with open("result.csv", "w") as f:
+            writer = csv.writer(f)
+            writer.writerow(("X", "Y", "X Velocity", "Y Velocity", "Velocity magnitude"))
+            writer.writerows(self.records)
+        # print(self.records)
 
 
 if __name__ == "__main__":
@@ -120,3 +122,5 @@ if __name__ == "__main__":
     vine.update(0)
     window.children.append(vine)
     window.run()
+
+    vine.save_records()

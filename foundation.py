@@ -29,8 +29,11 @@ class Math:
         return (Math.lerp(point_a[0], point_b[0], percentage), Math.lerp(point_a[1], point_b[1], percentage))
 
     @staticmethod
-    def magnitude(point_a: Vector, point_b: Vector) -> float:
-        return ((point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2) ** 0.5
+    def magnitude(point_a: Vector, point_b: Vector=None) -> float:
+        if point_b is None:
+            return (point_a[0] ** 2 + point_a[1] ** 2) ** 0.5
+        else:
+            return ((point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2) ** 0.5
 
     @staticmethod
     def sqr_magnitude(point_a: Vector, point_b: Vector) -> float:
@@ -122,7 +125,7 @@ class ManagedWindow:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
-                    sys.exit()
+                    return
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     InputSystem.MOUSE_DOWN = True
