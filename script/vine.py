@@ -27,7 +27,8 @@ class VineNode:
 
 
 class Vine(Entity):
-    def __init__(self, start_position, node_delta=(0, 25), length=10, gravity=(0, 10)):
+    def __init__(self, start_position, node_delta=(0, 25), length=10, gravity=(0, 10),
+                 parent_node_delta=False):
         self.points: List[VineNode] = []
 
         self.points.append(VineNode(start_position))
@@ -41,17 +42,16 @@ class Vine(Entity):
         self.gizmos: List[Gizmos] = []
         self.gravity = gravity
         self.records = []
+        self.parent_node_delta = parent_node_delta
 
     def apply_force(self, force_center, force_radius, force_strength):
         for i, point in enumerate(self.points):
             sqr_magnitude = Math.sqr_magnitude(point.position, force_center)
             if sqr_magnitude <= force_radius * force_radius:
                 point.velocity = Math.tuple_plus(point.velocity, force_strength)
-
-                # for e in range(i + 1, len(self.points)):
-                #     self.points[e].position = Math.tuple_plus(self.points[e].position, delta)
     
     def update(self, delta_time: float):
+        delta_time *= 2
         pull_from = self.points[0].position
         pull_direction = (0, 1)
 
@@ -62,17 +62,17 @@ class Vine(Entity):
                 continue
 
             pull_to = (pull_direction[0] * point.magnitude + pull_from[0], pull_direction[1] * point.magnitude + pull_from[1])
-            # self.gizmos.append(Gizmos(Gizmos.Dot, Color.YELLOW, pull_to))
+            self.gizmos.append(Gizmos(Gizmos.Dot, Color.YELLOW, pull_to))
 
             acceleration = self.gravity
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.RED, (point.position, Math.tuple_plus(point.position, self.gravity))))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.RED, (point.position, Math.tuple_plus(point.position, self.gravity))))
 
             lift_delta = Math.tuple_multiple(Math.tuple_minus(pull_from, point.position), 0.3)
             acceleration = Math.tuple_plus(acceleration, lift_delta)
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.GREEN, (point.position, Math.tuple_plus(point.position, lift_delta))))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.GREEN, (point.position, Math.tuple_plus(point.position, lift_delta))))
 
             acceleration = Math.tuple_plus(acceleration, Math.tuple_minus(pull_to, point.position))
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.BLUE, (point.position, pull_to)))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.BLUE, (point.position, pull_to)))
 
             point.velocity = Math.tuple_plus(point.velocity, Math.tuple_multiple(acceleration, delta_time))
 
@@ -86,26 +86,27 @@ class Vine(Entity):
                     Math.tuple_minus(suppose_point, pull_from),
                     point.magnitude))
 
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.YELLOW, (new_position, Math.tuple_plus(new_position, point.velocity))))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.YELLOW, (new_position, Math.tuple_plus(new_position, point.velocity))))
 
             # Calculate magnitude constrain translate in to velocity and acceleration
             length_fix_delta = Math.tuple_minus(new_position, suppose_point)
 
             # if length_fix_delta > 0.1:
             # Math.tuple_multiple(length_fix_delta, 10)
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.PINK, (point.position, new_position)))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.PINK, (point.position, new_position)))
 
             point.velocity = Math.tuple_plus(point.velocity, Math.tuple_multiple(length_fix_delta, 1))
             # point.velocity = Math.tuple_plus(point.velocity, Math.tuple_multiple(Math.tuple_minus(new_position, point.position), 1))
 
-            # self.gizmos.append(Gizmos(Gizmos.Line, Color.ORANGE, (point.position, Math.tuple_plus(point.position, acceleration))))
+            self.gizmos.append(Gizmos(Gizmos.Line, Color.ORANGE, (point.position, Math.tuple_plus(point.position, acceleration))))
             # point.velocity = Math.tuple_plus(point.velocity, length_fix_delta)
 
             delta = Math.tuple_minus(new_position, point.position)
             point.position = new_position
 
-            for e in range(i + 1, len(self.points)):
-                self.points[e].position = Math.tuple_plus(self.points[e].position, delta)
+            if self.parent_node_delta:
+                for e in range(i + 1, len(self.points)):
+                    self.points[e].position = Math.tuple_plus(self.points[e].position, delta)
             # self.records.append((*point.position, *point.velocity, Math.magnitude(point.velocity)))
 
             pull_direction = Math.normalize(Math.tuple_minus(point.position, pull_from))
@@ -160,13 +161,28 @@ if __name__ == "__main__":
 
     collider = FakeCollider((50, 100), color=Color.GREEN, radius=15, width=2, click_color=Color.RED, range=15)
 
-    for x in range(100, 210, 10):
-        vine = Vine((x, 10), node_delta=(6, 8), length=20, gravity=(0, 30))
-        window.children.append(vine)
-        collider.vines.append(vine)
+
+    vine = Vine((150, 10), node_delta=(0, 200), length=2, gravity=(0, 30))
+    window.children.append(vine)
+    collider.vines.append(vine)
+
+
+    vine = Vine((120, 10), node_delta=(0, 100), length=3, gravity=(0, 30))
+    window.children.append(vine)
+    collider.vines.append(vine)
+
+
+    vine = Vine((170, 10), node_delta=(0, 10), length=20, gravity=(0, 30))
+    window.children.append(vine)
+    collider.vines.append(vine)
+
+    # for x in range(100, 210, 10):
+    #     vine = Vine((x, 10), node_delta=(0, 10), length=20, gravity=(0, 30))
+    #     window.children.append(vine)
+    #     collider.vines.append(vine)
 
     window.children.append(collider)
 
     window.run()
 
-    vine.save_records()
+    # vine.save_records()
