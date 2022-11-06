@@ -3,8 +3,13 @@ import csv
 import math
 
 from typing import List, Tuple
-from foundation import ManagedWindow, Entity, InputSystem, Color, Math
-from bezier_curve import ClickablePoint
+
+try:
+    from .foundation import ManagedWindow, Entity, InputSystem, Color, Math
+    from .bezier_curve import ClickablePoint
+except ImportError:
+    from foundation import ManagedWindow, Entity, InputSystem, Color, Math
+    from bezier_curve import ClickablePoint
 
 
 class Gizmos:
@@ -52,14 +57,20 @@ class Vine(Entity):
     
     def update(self, delta_time: float):
         delta_time *= 2
-        pull_from = self.points[0].position
-        pull_direction = (0, 1)
+        # pull_from = self.points[0].position
+        # pull_direction = (0, 1)
 
         self.gizmos.clear()
 
         for i, point in enumerate(self.points):
             if i == 0:
                 continue
+
+            pull_from = self.points[i - 1].position
+            if i >= 2:
+                pull_direction = Math.normalize(Math.tuple_minus(self.points[i - 2].position, pull_from))
+            else:
+                pull_direction = (0, 1)
 
             pull_to = (pull_direction[0] * point.magnitude + pull_from[0], pull_direction[1] * point.magnitude + pull_from[1])
             self.gizmos.append(Gizmos(Gizmos.Dot, Color.YELLOW, pull_to))
@@ -109,8 +120,8 @@ class Vine(Entity):
                     self.points[e].position = Math.tuple_plus(self.points[e].position, delta)
             # self.records.append((*point.position, *point.velocity, Math.magnitude(point.velocity)))
 
-            pull_direction = Math.normalize(Math.tuple_minus(point.position, pull_from))
-            pull_from = point.position
+            # pull_direction = Math.normalize(Math.tuple_minus(point.position, pull_from))
+            # pull_from = point.position
 
     def draw(self, window: ManagedWindow):
         for i, point in enumerate(self.points):
@@ -119,18 +130,17 @@ class Vine(Entity):
             if i != 0:
                 pygame.draw.line(window.surface, Color.WHITE, self.points[i - 1].position, point.position)
         
-        for gizmos in self.gizmos:
-            if gizmos.type == Gizmos.Line:
-                pygame.draw.line(window.surface, gizmos.color, gizmos.argument[0], gizmos.argument[1])
-            elif gizmos.type == Gizmos.Dot:
-                pygame.draw.circle(window.surface, gizmos.color, gizmos.argument, radius=3)
+        # for gizmos in self.gizmos:
+        #     if gizmos.type == Gizmos.Line:
+        #         pygame.draw.line(window.surface, gizmos.color, gizmos.argument[0], gizmos.argument[1])
+        #     elif gizmos.type == Gizmos.Dot:
+        #         pygame.draw.circle(window.surface, gizmos.color, gizmos.argument, radius=3)
 
     def save_records(self):
         with open("result.csv", "w") as f:
             writer = csv.writer(f)
             writer.writerow(("X", "Y", "X Velocity", "Y Velocity", "Velocity magnitude"))
             writer.writerows(self.records)
-        # print(self.records)
 
 
 class FakeCollider(ClickablePoint):
@@ -154,7 +164,7 @@ class FakeCollider(ClickablePoint):
 
 
 if __name__ == "__main__":
-    window = ManagedWindow((300, 300), step_update=True, tick=30)
+    window = ManagedWindow((300, 300), step_update=False, tick=30)
     # vine = Vine((150, 10), node_delta=(6, 8), length=20, gravity=(0, 30))
     # vine.update(0)
     # window.children.append(Vine((150, 10), node_delta=(6, 8), length=20, gravity=(0, 30)))
@@ -162,24 +172,24 @@ if __name__ == "__main__":
     collider = FakeCollider((50, 100), color=Color.GREEN, radius=15, width=2, click_color=Color.RED, range=15)
 
 
-    vine = Vine((150, 10), node_delta=(0, 200), length=2, gravity=(0, 30))
-    window.children.append(vine)
-    collider.vines.append(vine)
+    # vine = Vine((150, 10), node_delta=(0, 200), length=2, gravity=(0, 30))
+    # window.children.append(vine)
+    # collider.vines.append(vine)
 
 
-    vine = Vine((120, 10), node_delta=(0, 100), length=3, gravity=(0, 30))
-    window.children.append(vine)
-    collider.vines.append(vine)
+    # vine = Vine((120, 10), node_delta=(0, 100), length=3, gravity=(0, 30))
+    # window.children.append(vine)
+    # collider.vines.append(vine)
 
 
-    vine = Vine((170, 10), node_delta=(0, 10), length=20, gravity=(0, 30))
-    window.children.append(vine)
-    collider.vines.append(vine)
+    # vine = Vine((170, 10), node_delta=(0, 10), length=20, gravity=(0, 30))
+    # window.children.append(vine)
+    # collider.vines.append(vine)
 
-    # for x in range(100, 210, 10):
-    #     vine = Vine((x, 10), node_delta=(0, 10), length=20, gravity=(0, 30))
-    #     window.children.append(vine)
-    #     collider.vines.append(vine)
+    for x in range(100, 210, 10):
+        vine = Vine((x, 10), node_delta=(0, 10), length=20, gravity=(0, 30))
+        window.children.append(vine)
+        collider.vines.append(vine)
 
     window.children.append(collider)
 

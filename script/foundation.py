@@ -1,3 +1,4 @@
+from os import stat
 import pygame
 import sys
 
@@ -40,9 +41,14 @@ class Math:
         return (point_a[0] - point_b[0]) ** 2 + (point_a[1] - point_b[1]) ** 2
     
     @staticmethod
-    def clamp_magnitude(vector: Vector, distance: float) -> Vector:
-        magnitude = ((vector[0] ** 2 + vector[1] ** 2) ** 0.5) / distance
-        return (vector[0] / magnitude, vector[1] / magnitude)
+    def clamp_magnitude(vector: Vector, clamp_distance: float, clamp_when_distance_over: bool=False) -> Vector:
+        distance = (vector[0] ** 2 + vector[1] ** 2) ** 0.5
+
+        if clamp_when_distance_over and distance < clamp_distance:
+            return vector
+
+        magnitude_multiplier = distance / clamp_distance
+        return (vector[0] / magnitude_multiplier, vector[1] / magnitude_multiplier)
 
     @staticmethod
     def tuple_multiple(point_a: Vector, point_b: Vector | float) -> Vector:
