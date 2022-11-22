@@ -18,6 +18,7 @@ class Color:
 
 
 Vector = Tuple[int, int]
+Vector3D = Tuple[float, float, float]
 
 
 class Math:
@@ -75,6 +76,13 @@ class InputSystem:
     MOUSE_DOWN = False
     MOUSE_UP = False
     MOUSE_POS = (0, 0)
+
+    KEY_A = False
+    KEY_D = False
+    KEY_E = False
+    KEY_Q = False
+    KEY_S = False
+    KEY_W = False
 
 
 class Entity:
@@ -140,10 +148,37 @@ class ManagedWindow:
                     InputSystem.MOUSE_UP = True
 
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_a:
+                        InputSystem.KEY_A = True
+                    elif event.key == pygame.K_d:
+                        InputSystem.KEY_D = True
+                    elif event.key == pygame.K_e:
+                        InputSystem.KEY_E = True
+                    elif event.key == pygame.K_q:
+                        InputSystem.KEY_Q = True
+                    elif event.key == pygame.K_s:
+                        InputSystem.KEY_S = True
+                    elif event.key == pygame.K_w:
+                        InputSystem.KEY_W = True
+
+                    elif event.key == pygame.K_SPACE:
                         update_key_pressed = True
                     elif event.key == pygame.K_RETURN:
                         self.step_update = not self.step_update
+
+                elif event.type == pygame.KEYUP:
+                    if event.key == pygame.K_a:
+                        InputSystem.KEY_A = False
+                    elif event.key == pygame.K_d:
+                        InputSystem.KEY_D = False
+                    elif event.key == pygame.K_e:
+                        InputSystem.KEY_E = False
+                    elif event.key == pygame.K_q:
+                        InputSystem.KEY_Q = False
+                    elif event.key == pygame.K_s:
+                        InputSystem.KEY_S = False
+                    elif event.key == pygame.K_w:
+                        InputSystem.KEY_W = False
 
             InputSystem.MOUSE_POS = pygame.mouse.get_pos()
             
